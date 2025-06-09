@@ -25,7 +25,23 @@ public class UDPClient {
 
             for (String filename : filenames) {
                 if (filename.trim().isEmpty()) continue;
+try {
+    //下载请求
 
+    String request = "下载" + filename.trim();
+    String response = sendAndReceive(socket, serverAddr, serverPort, request);
+
+    String[] parts = response.split(" ");
+    if (parts[0].equals("ERR")) {
+        System.out.println("File not found: " + filename);
+        continue;
+    }
+
+    if (!parts[0].equals("OK") || parts.length < 6) {
+        System.out.println("Invalid response: " + response);
+        continue;
+
+}
 
 
 
