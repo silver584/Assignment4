@@ -122,11 +122,9 @@ private  static String sendAndReceive(DatagramSocket socket, InetAddress addr, i
             long downloaded = 0;
             while (downloaded < fileSize) {
 
-
                 long start = downloaded;
                 long end = Math.min(start + BLOCK_SIZE - 1, fileSize - 1);
                 String request = String.format("FILE %s GET START %d END %d", filename, start, end);
-
 
 
                 String response = sendAndReceive(socket, addr, port, request);
@@ -143,7 +141,6 @@ private  static String sendAndReceive(DatagramSocket socket, InetAddress addr, i
             // 解码数据
             byte[] fileData = Base64.getDecoder().decode(base64Data);
 
-
             channel.position(start);
             ByteBuffer buffer = ByteBuffer.wrap(fileData);
             channel.write(buffer);
@@ -151,9 +148,7 @@ private  static String sendAndReceive(DatagramSocket socket, InetAddress addr, i
 
             // 显示进度
 
-
         }
-
         System.out.println("\nhave finish");
 
         // 发送关闭请求
@@ -168,9 +163,6 @@ private  static String sendAndReceive(DatagramSocket socket, InetAddress addr, i
         System.out.println("Close confirmation failed: " + closeResponse);
         return false;
 
+        }
     }
-
-
-}
-
 }
