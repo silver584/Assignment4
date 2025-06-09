@@ -70,94 +70,88 @@ public class UDPServer {
         catch (Exception e) {
             System.err.println("Server error: " + e.getMessage());
         }
-
-
-
-            }
-
-
-        }
     }
+
+
     private static void handleFileTransmission(String filename, InetAddress clientAddress,
-                                               int clientPort, DatagramSocket mainSocket) {
-        try (DatagramSocket dataSocket = createDataSocket();
-             RandomAccessFile file = new RandomAccessFile(filename, "r");
+                                           int clientPort, DatagramSocket mainSocket) {
+    try {
+
+        DatagramSocket dataSocket = createDataSocket();
+        int dataPort = dataSocket.getLocalPort();
+
+        // 获取文件大小
+        long fileSize = Files.size(Paths.get(filename));
+
+        // 发送OK响应
+        String response = String.format("OK %s SIZE %d PORT %d", filename, fileSize, dataPort);
+        byte[] responseData = response.getBytes();
+
+
+        System.out.println("Serving " + filename + " to " + clientAddress +
+                " on port " + dataPort);
+
+        // 打开文件
+        try (RandomAccessFile file = new RandomAccessFile(filename, "r");
              FileChannel channel = file.getChannel()) {
 
-
-            int dataPort = dataSocket.getLocalPort();
-            long fileSize = Files.size(Paths.get(filename));
-
-            // 发送初始响应
-            sendResponse(mainSocket, String.format("OK %s SIZE %d PORT %d",
-                    filename, fileSize, dataPort), clientAddress, clientPort);
-
-            System.out.printf("Serving %s to %s on port %d%n",
-                    filename, clientAddress, dataPort);
-
-            // 处理客户端请求
             byte[] buffer = new byte[MAX_PACKET_SIZE];
-            while (processClientRequest(dataSocket, channel, filename, clientAddress, clientPort, buffer)) {
 
+            while (true) {
+                // 接收客户端请求
+                DatagramPacket requestPacket = new DatagramPacket(buffer, buffer.length);
+                dataSocket.receive(requestPacket);
+
+                String request = new String(requestPacket.getData(), 0, requestPacket.getLength());
+                String[] parts = request.trim().split(" ");
+
+                // 检查关闭请求
+                if (parts.length >= 3 && parts[0].equals("FILE") && parts[2].equals("CLOSE")) {
+                    String closeResponse = "FILE " + filename + " CLOSE_OK";
+                    byte[] closeData = closeResponse.getBytes();
+                    DatagramPacket closePacket = new DatagramPacket(
+                            closeData, closeData.length, clientAddress, clientPort);
+                    dataSocket.send(closePacket);
+                    System.out.println("Closed " + filename + " for " + clientAddress);
+                    break;
+                }
+
+                // 处理数据请求
+                if (parts.length < 7 || !parts[0].equals("FILE") || !parts[2].equals("GET")) {
+                    continue;
+                }
+
+                // 解析字节范围
+                long start = Long.parseLong(parts[4]);
+                long end = Long.parseLong(parts[6]);
+
+                // 读取文件数据
+                int length = (int) (end - start + 1);
+                ByteBuffer fileBuffer = ByteBuffer.allocate(length);
+
+                channel.read(fileBuffer);
+                fileBuffer.flip();
+                byte[] fileData = new byte[length];
+                fileBuffer.get(fileData);
+
+                // 编码并发送数据
+                String base64Data = Base64.getEncoder().encodeToString(fileData);
+                String dataResponse = String.format(
+                        "FILE %s OK START %d END %d DATA %s", filename, start, end, base64Data);
+
+                byte[] responseDataBytes = dataResponse.getBytes();
+                DatagramPacket dataPacket = new DatagramPacket(
+                        responseDataBytes, responseDataBytes.length, clientAddress, clientPort);
+                dataSocket.send(dataPacket);
             }
-        } catch (Exception e) {
-            System.err.println("Error handling " + filename + ": " + e.getMessage());
         }
+    } catch (Exception e) {
+        System.err.println("Error handling " + filename + ": " + e.getMessage());
     }
+}
 
 
-    private static void sendResponse(DatagramSocket socket, String message,
-                                     InetAddress address, int port) throws IOException {
-        byte[] data = message.getBytes();
-        socket.send(new DatagramPacket(data, data.length, address, port));
-    }
 
-
-    private static boolean processClientRequest(DatagramSocket dataSocket, FileChannel channel,
-                                                String filename, InetAddress clientAddress,
-                                                int clientPort, byte[] buffer) throws IOException {
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-        dataSocket.receive(packet);
-
-        String request = new String(packet.getData(), 0, packet.getLength()).trim();
-        String[] parts = request.split(" ");
-
-        // 处理关闭请求
-        if (parts.length >= 3 && "FILE".equals(parts[0]) && "CLOSE".equals(parts[2])) {
-            sendResponse(dataSocket, "FILE " + filename + " CLOSE_OK", clientAddress, clientPort);
-            System.out.println("Closed " + filename + " for " + clientAddress);
-            return false;  // 终止循环
-        }
-
-        // 处理数据请求
-        if (parts.length >= 7 && "FILE".equals(parts[0]) && "GET".equals(parts[2])) {
-            long start = Long.parseLong(parts[4]);
-            long end = Long.parseLong(parts[6]);
-            sendFileData(channel, dataSocket, filename, start, end, clientAddress, clientPort);
-        }
-        return true;
-    }
-
-    // 辅助方法：发送文件数据块
-    private static void sendFileData(FileChannel channel, DatagramSocket socket,
-                                     String filename, long start, long end,
-                                     InetAddress address, int port) throws IOException {
-        int length = (int) (end - start + 1);
-        ByteBuffer fileBuffer = ByteBuffer.allocate(length);
-        channel.position(start);
-        channel.read(fileBuffer);
-        fileBuffer.flip();
-
-        byte[] fileData = new byte[length];
-        fileBuffer.get(fileData);
-
-        String base64Data = Base64.getEncoder().encodeToString(fileData);
-        String response = String.format("FILE %s OK START %d END %d DATA %s",
-                filename, start, end, base64Data);
-
-        sendResponse(socket, response, address, port);
-
-    }
 
     private static DatagramSocket createDataSocket() throws SocketException {
         Random random = new Random();
