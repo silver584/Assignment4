@@ -1,6 +1,6 @@
+import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-
-
+import java.net.InetAddress;
 
 
 public class UDPServer {
@@ -23,7 +23,28 @@ public class UDPServer {
             System.out.println("Server started on port " + port);
             byte[] buffer = new byte[MAX_PACKET_SIZE];
 
-        }
 
+            while (true) {
+                // 接收下载请求
+                DatagramPacket requestPacket = new DatagramPacket(buffer, buffer.length);
+                serverSocket.receive(requestPacket);
+
+                // 处理请求
+                String request = new String(requestPacket.getData(), 0, requestPacket.getLength());
+                String[] parts = request.trim().split(" ");
+
+
+                if (parts.length < 2 || !parts[0].equals("DOWNLOAD")) {
+                    continue;
+                }
+
+                String filename = parts[1];
+                InetAddress clientAddress = requestPacket.getAddress();
+
+
+            }
+
+
+        }
     }
 }
