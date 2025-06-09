@@ -62,6 +62,16 @@ public class UDPServer {
                     System.out.println("File not found: " + filename);
                     continue;
                 }
+                new Thread(() -> {
+                    handleFileTransmission(filename, clientAddress, clientPort, serverSocket);
+                }).start();
+            }
+        }
+        catch (Exception e) {
+            System.err.println("Server error: " + e.getMessage());
+        }
+
+
 
             }
 
