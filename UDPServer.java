@@ -41,6 +41,8 @@ public class UDPServer {
                 String filename = parts[1];
                 InetAddress clientAddress = requestPacket.getAddress();
 
+                int clientPort = requestPacket.getPort();
+
 
             }
 
