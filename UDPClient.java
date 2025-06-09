@@ -113,9 +113,16 @@ private  static String sendAndReceive(DatagramSocket socket, InetAddress addr, i
 
             long downloaded = 0;
             while (downloaded < fileSize) {
-            
+                String request = String.format("FILE %s GET START %d END %d", filename, start, end);
+
+
+                String response = sendAndReceive(socket, addr, port, request);
+
 
             }
+        
+
+
         }
     }
 
