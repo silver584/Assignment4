@@ -63,27 +63,18 @@ public class UDPClient {
                         System.out.println("Successfully downloaded " + filename);
                     } else {
                         System.out.println("Failed to download " + filename);
-
-
                     }
-
-
                 }
 
                 catch (Exception e) {
                     System.out.println("Error processing " + filename + ": " + e.getMessage());
                 }
-
             }
-
             socket.close();
         }
-
-
         catch (Exception e) {
         System.err.println("Fatal error: " + e.getMessage());
         }
-
     }
 private  static String sendAndReceive(DatagramSocket socket, InetAddress addr, int port, String message)
         throws IOException {
@@ -96,6 +87,7 @@ private  static String sendAndReceive(DatagramSocket socket, InetAddress addr, i
         try {
             // 发送消息
             DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, addr, port);
+
             socket.send(sendPacket);
 
             //
@@ -129,7 +121,12 @@ private  static String sendAndReceive(DatagramSocket socket, InetAddress addr, i
 
             long downloaded = 0;
             while (downloaded < fileSize) {
+
+
+                long start = downloaded;
+                long end = Math.min(start + BLOCK_SIZE - 1, fileSize - 1);
                 String request = String.format("FILE %s GET START %d END %d", filename, start, end);
+
 
 
                 String response = sendAndReceive(socket, addr, port, request);
