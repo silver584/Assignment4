@@ -50,6 +50,15 @@ public class UDPClient {
                         System.out.println("Invalid response: " + response);
                         continue;
                     }
+
+                    // 解析响应
+                    long fileSize = Long.parseLong(parts[3]);
+                    int dataPort = Integer.parseInt(parts[5]);
+                    // 下载文件
+                    if (downloadFile(socket, serverAddr, dataPort, filename, fileSize)) {
+                   
+                    }
+
                 }
             }
 
