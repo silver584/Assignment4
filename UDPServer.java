@@ -1,14 +1,13 @@
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
+import java.util.Random;
 
 
 public class UDPServer {
@@ -75,7 +74,7 @@ public class UDPServer {
              RandomAccessFile file = new RandomAccessFile(filename, "r");
              FileChannel channel = file.getChannel()) {
 
-      
+
             int dataPort = dataSocket.getLocalPort();
             long fileSize = Files.size(Paths.get(filename));
 
@@ -147,5 +146,25 @@ public class UDPServer {
                 filename, start, end, base64Data);
 
         sendResponse(socket, response, address, port);
+
     }
+
+    private static DatagramSocket createDataSocket() throws SocketException {
+        Random random = new Random();
+        int attempts = 0;
+
+        while (attempts < 100) {
+            try {
+                int port = MIN_DATA_PORT + random.nextInt(MAX_DATA_PORT - MIN_DATA_PORT + 1);
+                return new DatagramSocket(port);
+            } catch (BindException e) {
+                attempts++;
+            }
+        }
+
+        throw new SocketException("Could not find available port in range");
+    }
+
+
+
 }
