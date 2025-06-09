@@ -1,8 +1,10 @@
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -56,7 +58,7 @@ public class UDPClient {
                     int dataPort = Integer.parseInt(parts[5]);
                     // 下载文件
                     if (downloadFile(socket, serverAddr, dataPort, filename, fileSize)) {
-                   
+
                     }
 
                 }
@@ -100,4 +102,22 @@ private  static String sendAndReceive(DatagramSocket socket, InetAddress addr, i
 
 
     }
+
+    private static boolean downloadFile(DatagramSocket socket, InetAddress addr, int port,
+                                        String filename, long fileSize) throws IOException {
+
+        try (RandomAccessFile file = new RandomAccessFile(filename, "rw");
+             FileChannel channel = file.getChannel()) {
+
+            System.out.print("Downloading " + filename + " (" + fileSize + " bytes): ");
+
+            long downloaded = 0;
+            while (downloaded < fileSize) {
+            
+
+            }
+        }
+    }
+
+
 }
