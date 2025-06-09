@@ -1,6 +1,9 @@
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 
 public class UDPServer {
@@ -43,7 +46,18 @@ public class UDPServer {
 
                 int clientPort = requestPacket.getPort();
 
-
+                //检查文件
+                Path filePath = Paths.get(filename);
+                if (!Files.exists(filePath) )
+                {
+                    String response = "ERR " + filename + " NOT FOUND";
+                    byte[] responseData = response.getBytes();
+                    DatagramPacket responsePacket = new DatagramPacket(
+                            responseData, responseData.length, clientAddress, clientPort);
+                    serverSocket.send(responsePacket);
+                    System.out.println("File not found: " + filename);
+                    continue;
+                }
             }
 
 
