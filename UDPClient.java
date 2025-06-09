@@ -4,9 +4,11 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.List;
 
 public class UDPClient {
@@ -58,15 +60,29 @@ public class UDPClient {
                     int dataPort = Integer.parseInt(parts[5]);
                     // 下载文件
                     if (downloadFile(socket, serverAddr, dataPort, filename, fileSize)) {
+                        System.out.println("Successfully downloaded " + filename);
+                    } else {
+                        System.out.println("Failed to download " + filename);
+
 
                     }
 
+
                 }
+
+                catch (Exception e) {
+                    System.out.println("Error processing " + filename + ": " + e.getMessage());
+                }
+
             }
 
+            socket.close();
         }
 
 
+        catch (Exception e) {
+        System.err.println("Fatal error: " + e.getMessage());
+        }
 
     }
 private  static String sendAndReceive(DatagramSocket socket, InetAddress addr, int port, String message)
@@ -117,14 +133,47 @@ private  static String sendAndReceive(DatagramSocket socket, InetAddress addr, i
 
 
                 String response = sendAndReceive(socket, addr, port, request);
-
+                String[] parts = response.split(" ");
+                if (parts.length < 8 || !parts[0].equals("FILE") || !parts[2].equals("OK")) {
+                    System.out.println("\nInvalid response: " + response);
+                    return false;
 
             }
-        
+                // 提取Base64编码的数据
+            int dataIndex = response.indexOf("DATA") + 5;
+            String base64Data = response.substring(dataIndex).trim();
+
+            // 解码数据
+            byte[] fileData = Base64.getDecoder().decode(base64Data);
+
+
+            channel.position(start);
+            ByteBuffer buffer = ByteBuffer.wrap(fileData);
+            channel.write(buffer);
+            downloaded += fileData.length;
+
+            // 显示进度
 
 
         }
+
+        System.out.println("\nhave finish");
+
+        // 发送关闭请求
+        String closeRequest = "FILE " + filename + " CLOSE";
+        String closeResponse = sendAndReceive(socket, addr, port, closeRequest);
+
+        if (closeResponse.contains("CLOSE_OK")) {
+            System.out.println("File " + filename + " closed successfully");
+            return true;
+        }
+
+        System.out.println("Close confirmation failed: " + closeResponse);
+        return false;
+
     }
 
+
+}
 
 }
