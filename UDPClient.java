@@ -40,29 +40,18 @@ try {
     if (!parts[0].equals("OK") || parts.length < 6) {
         System.out.println("Invalid response: " + response);
         continue;
-
+    }
 }
-
-
-
-
             }
 
-
-
-
-
-
-
         }
 
 
-
-
-        catch (IOException e) {
-
-        }
 
     }
+private  static String sendAndReceive(DatagramSocket socket, InetAddress addr, int port, String message)
+        throws IOException {
 
+
+    }
 }
