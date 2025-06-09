@@ -1,4 +1,6 @@
 import java.io.IOException;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -17,8 +19,31 @@ public class UDPClient {
             // 读取文件列表
             List<String> filenames = Files.readAllLines(Paths.get(fileList));
 
+            //Udp
+            DatagramSocket socket = new DatagramSocket();
+            InetAddress serverAddr = InetAddress.getByName(serverHost);
 
-        } catch (IOException e) {
+            for (String filename : filenames) {
+                if (filename.trim().isEmpty()) continue;
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+        }
+
+
+
+
+        catch (IOException e) {
 
         }
 
