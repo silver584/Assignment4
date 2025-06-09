@@ -1,6 +1,8 @@
 import java.io.IOException;
+import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketTimeoutException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -12,7 +14,7 @@ public class UDPClient {
     private static final int MAX_PACKET_SIZE = 65536; // 最大数据包大小
 
 
-    
+
     public static void main(String[] args) {
         if (args.length != 3) {
             System.out.println("Usage: java UDPClient <server_host> <server_port> <file_list>");
@@ -63,6 +65,29 @@ private  static String sendAndReceive(DatagramSocket socket, InetAddress addr, i
 
     byte[] sendData = message.getBytes();
     byte[] receiveData = new byte[MAX_PACKET_SIZE];
+    while (retries < MAX_RETRIES) {
+        try {
+            // 发送消息
+            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, addr, port);
+            socket.send(sendPacket);
+
+            //
+            socket.setSoTimeout(currentTimeout);
+
+            // 接收响应
+            DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+            socket.receive(receivePacket);
+
+            return new String(receivePacket.getData(), 0, receivePacket.getLength());
+        } catch (SocketTimeoutException e) {
+            retries++;
+            System.out.println("Timeout (attempt " + retries + "/" + MAX_RETRIES + "), retrying...");
+            currentTimeout *= 2;
+        }
+
+
+    }
+    throw new IOException("Max retries exceeded, giving up");
 
 
     }
